@@ -49,21 +49,47 @@ const getAdmin = async (req, res) => {
     }
 };
 
- const orderStatusController = async (req, res) => {
+const orderStatusController = async (req, res) => {
     try {
       const { orderId } = req.params;
-      const { delivery_status } = req.body;
-      const orders = await Order.findByIdAndUpdate(
+      const { status } = req.body;
+  
+      // Find the order by ID to get the deliveryType
+      const order = await Order.findById(orderId);
+  
+      if (!order) {
+        return res.status(404).send({
+          success: false,
+          message: "Order not found",
+        });
+      }
+  
+      // Determine which status to update based on the deliveryType
+      let updateFields = {};
+      if (order.deliveryType === 'Pickup') {
+        updateFields.takeaway_status = status;
+      } else if (order.deliveryType === 'Delivery') {
+        updateFields.delivery_status = status;
+      } else {
+        return res.status(400).send({
+          success: false,
+          message: "Invalid delivery type",
+        });
+      }
+  
+      // Update the order with the new status
+      const updatedOrder = await Order.findByIdAndUpdate(
         orderId,
-        { delivery_status },
+        updateFields,
         { new: true }
       );
-      res.json(orders);
+  
+      res.json(updatedOrder);
     } catch (error) {
       console.log(error);
       res.status(500).send({
         success: false,
-        message: "Error While Updateing Order",
+        message: "Error while updating order",
         error,
       });
     }
