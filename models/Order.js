@@ -28,6 +28,16 @@ const orderSchema = new mongoose.Schema(
       default: "Pending",
       enum: ["Pending", "Processing", "Shipped", "deliverd", "cancel"],
     },
+    takeaway_status: {
+      type: String,
+      enum: ['Pending', ' Order is Preparing', 'Ready for Pickup', 'Completed', 'Cancel'],
+      default: 'Pending'
+    },
+    deliveryType: {
+      type: String,
+      enum: ['Delivery', 'Pickup'],
+      required: true
+    },
     payment_status: { type: String, required: true },
   },
   { timestamps: true }
