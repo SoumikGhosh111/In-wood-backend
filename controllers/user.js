@@ -6,6 +6,113 @@ const otpGenerator = require("otp-generator");
 const { Order } = require("../models/Order");
 require('dotenv').config();
 const twilio = require('twilio');
+
+const registerController = async (req, res) => {
+    try {
+        // Check if the email already exists
+        const existingUserByEmail = await User.findOne({ email: req.body.email });
+        if (existingUserByEmail) {
+            return res.status(200).send({
+                message: "User with this email already exists",
+                success: false,
+            });
+        }
+
+        // Check if the phone number already exists
+        const existingUserByPhone = await User.findOne({ phoneNumber: req.body.phoneNumber });
+        if (existingUserByPhone) {
+            return res.status(200).send({
+                message: "User with this phone number already exists",
+                success: false,
+            });
+        }
+
+        // Hash the password
+        const password = req.body.password;
+        const salt = await bcrypt.genSalt(10);
+        const hashPassword = await bcrypt.hash(password, salt);
+        req.body.password = hashPassword;
+
+        const confirmPassword = await bcrypt.hash(req.body.passwordConfirm, salt);
+        req.body.passwordConfirm = confirmPassword;
+
+        // Generate OTP
+        const otp = otpGenerator.generate(6, {
+            digits: true,
+            upperCase: false,
+            specialChars: false,
+            upperCaseAlphabets: false,
+            lowerCaseAlphabets: false,
+        });
+
+        if (req.body.password === req.body.passwordConfirm) {
+            // Create new user
+            const newUser = new User({
+                name: req.body.name,
+                email: req.body.email,
+                password: req.body.password,
+                passwordConfirm: req.body.passwordConfirm,
+                otp: otp,
+                phoneNumber: req.body.phoneNumber, // Storing phone number
+            });
+            await newUser.save();
+
+            // Generate JWT token
+            const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
+                expiresIn: "1d",
+            });
+
+            // Send OTP via SMS using Twilio
+            const accountSid = process.env.TWILIO_ACCOUNT_SID;
+            const authToken = process.env.TWILIO_AUTH_TOKEN;
+            const client = twilio(accountSid, authToken);
+
+            try {
+                await client.messages.create({
+                    body: `Dear ${req.body.name}, your OTP for Inwood Pizza Shop registration is: ${otp}`,
+                    from: process.env.TWILIO_PHONE_NUMBER,
+                    to: req.body.phoneNumber, // Storing phone number
+                });
+            } catch (error) {
+                if (error.code === 21408) {
+                    return res.status(400).send({
+                        message: "Permission to send SMS to this region is not enabled.",
+                        success: false,
+                    });
+                } else {
+                    console.log(error);
+                    return res.status(500).send({
+                        message: "Error sending SMS",
+                        success: false,
+                    });
+                }
+            }
+
+            // Successful registration response
+            return res.status(201).send({
+                message: "Register Successfully. OTP Sent to SMS",
+                success: true,
+                data: {
+                    user: newUser,
+                    token,
+                },
+            });
+        } else {
+            return res.status(400).send({
+                message: "Password does not match",
+                success: false,
+            });
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            message: "Register error",
+            success: false,
+        });
+    }
+};
+
+
 // const vonage = new (require('@vonage/server-sdk'))({
 //     apiKey: process.env.VONAGE_API_KEY,
 //     apiSecret: process.env.VONAGE_API_SECRET,
