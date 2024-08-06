@@ -69,29 +69,29 @@ const deleteCoupon = async (req, res) => {
 };
 
 const useCoupon = async (req, res) => {
-    const { userId, couponCode } = req.body;
-  
-    try {
-      const coupon = await Coupon.findOne({ code: couponCode });
-      if (!coupon) {
-        return res.status(404).json({ message: 'Coupon not found' });
-      }
-  
-      if (coupon.usedBy.includes(userId)) {
-        return res.status(400).json({ message: 'Coupon already used by this user' });
-      }
-  
-      if (new Date(coupon.expirationDate) < new Date()) {
-        return res.status(400).json({ message: 'Coupon has expired' });
-      }
-  
-      coupon.usedBy.push(userId);
-      await coupon.save();
-  
-      res.status(200).json({ message: 'Coupon used successfully' });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+  const { userId, couponCode } = req.body;
+
+  try {
+    const coupon = await Coupon.findOne({ code: couponCode });
+    if (!coupon) {
+      return res.status(404).json({ message: 'Coupon not found' });
     }
+
+    if (coupon.usedBy.includes(userId)) {
+      return res.status(400).json({ message: 'Coupon already used by this user' });
+    }
+
+    if (new Date(coupon.expirationDate) < new Date()) {
+      return res.status(400).json({ message: 'Coupon has expired' });
+    }
+
+    coupon.usedBy.push(userId);
+    await coupon.save();
+
+    res.status(200).json({ message: 'Coupon used successfully', discount: coupon.discount });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
   module.exports = {
