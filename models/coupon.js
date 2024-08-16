@@ -10,6 +10,14 @@ const CouponSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  description: {
+    type: String,
+    required: true
+  },
+  minSpend: {
+    type: Number,
+    required: true
+  },
   expirationDate: {
     type: Date,
     required: true
@@ -21,7 +29,7 @@ const CouponSchema = new mongoose.Schema({
   usedBy: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
-  }]
+  }],
 });
 
 module.exports = mongoose.model('Coupon', CouponSchema);
