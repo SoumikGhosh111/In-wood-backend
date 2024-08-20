@@ -6,29 +6,35 @@ const CouponSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  discount: {
+  discountPercentage: {
     type: Number,
-    required: true
+    required: true,
+    min: 0,
+    max: 100,
+  },
+  maxDiscountValue: {
+    type: Number,
+    required: true,
   },
   description: {
     type: String,
-    required: true
+    required: true,
   },
   minSpend: {
     type: Number,
-    required: true
+    required: true,
   },
   expirationDate: {
     type: Date,
-    required: true
+    required: true,
   },
   isActive: {
     type: Boolean,
-    default: true
+    default: true,
   },
   usedBy: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'User',
   }],
 });
 
