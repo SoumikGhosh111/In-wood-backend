@@ -3,12 +3,13 @@ const User = require('../models/User');
 
 // Create a new coupon
 const createCoupon = async (req, res) => {
-  const { code, discount, expirationDate, description, minSpend } = req.body;
+  const { code, discountPercentage, maxDiscountValue, expirationDate, description, minSpend } = req.body;
 
   try {
     const newCoupon = new Coupon({
       code,
-      discount,
+      discountPercentage,
+      maxDiscountValue,
       expirationDate,
       description,
       minSpend
@@ -20,9 +21,6 @@ const createCoupon = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
-
-
-
 
 // Get all coupons
 const getAllCoupons = async (req, res) => {
@@ -59,7 +57,6 @@ const updateCoupon = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
-
 
 // Delete a coupon
 const deleteCoupon = async (req, res) => {
@@ -99,24 +96,28 @@ const useCoupon = async (req, res) => {
       return res.status(400).json({ message: `Minimum spend of $${coupon.minSpend} is required to use this coupon` });
     }
 
+    // Calculate discount
+    const discount = Math.min((totalSpend * coupon.discountPercentage) / 100, coupon.maxDiscountValue);
+
+    // Update usedBy array
     // coupon.usedBy.push(userId);
     await coupon.save();
 
-    res.status(200).json({ message: 'Coupon used successfully', discount: coupon.discount });
+    res.status(200).json({
+      message: 'Coupon used successfully',
+      discount,
+      discountPercentage: coupon.discountPercentage  
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-
-
-
-
-  module.exports = {
-    createCoupon,
-    getAllCoupons,
-    getCouponById,
-    updateCoupon,
-    deleteCoupon,
-    useCoupon
+module.exports = {
+  createCoupon,
+  getAllCoupons,
+  getCouponById,
+  updateCoupon,
+  deleteCoupon,
+  useCoupon
 };
