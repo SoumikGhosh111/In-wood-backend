@@ -106,7 +106,8 @@ const useCoupon = async (req, res) => {
     res.status(200).json({
       message: 'Coupon used successfully',
       discount,
-      discountPercentage: coupon.discountPercentage  
+      discountPercentage: coupon.discountPercentage,
+      maxDiscountValue: coupon.maxDiscountValue 
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
